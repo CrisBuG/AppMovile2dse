@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,7 +53,7 @@ fun CartScreen(onCheckoutDone: () -> Unit, cartViewModel: CartViewModel = viewMo
                         Text("Envío", style = MaterialTheme.typography.bodyMedium)
                         Text(formatClp(envio), style = MaterialTheme.typography.bodyMedium)
                     }
-                    Divider()
+                    HorizontalDivider()
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Total", style = MaterialTheme.typography.titleMedium)
                         Text(formatClp(total), style = MaterialTheme.typography.titleMedium)

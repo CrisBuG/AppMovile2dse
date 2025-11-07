@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.Image
@@ -119,7 +119,7 @@ fun QuienesSomosScreen() {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                          Icon(Icons.Filled.CameraAlt, contentDescription = "Instagram")
                          Icon(Icons.Filled.Favorite, contentDescription = "Facebook")
-                         Icon(Icons.Filled.Message, contentDescription = "WhatsApp")
+                         Icon(Icons.AutoMirrored.Filled.Message, contentDescription = "WhatsApp")
                      }
                 }
             }

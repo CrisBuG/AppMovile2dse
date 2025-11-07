@@ -5,7 +5,8 @@ import java.util.Currency
 import java.util.Locale
 
 fun formatClp(value: Double): String {
-    val formatter = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
+    val locale = Locale.forLanguageTag("es-CL")
+    val formatter = NumberFormat.getCurrencyInstance(locale)
     formatter.currency = Currency.getInstance("CLP")
     formatter.maximumFractionDigits = 0
     return formatter.format(value)

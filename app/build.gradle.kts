@@ -61,6 +61,13 @@ dependencies {
     // Carga de imágenes en Compose
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
+    // Retrofit y Gson
+    implementation(libs.retrofit2.core)
+    implementation(libs.retrofit2.converter.gson)
+    // Coroutines para trabajo asíncrono
+    implementation(libs.coroutines.android)
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -5,6 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.MenuAnchorType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +60,15 @@ fun PantallaProductos(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Productos") }, actions = { TextButton(onClick = onAgregar) { Text("Agregar") } }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Productos") },
+                actions = {
+                    TextButton(onClick = { productosViewModel.syncFromApi() }) { Text("Actualizar") }
+                    TextButton(onClick = onAgregar) { Text("Agregar") }
+                }
+            )
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = onAgregar) { Text("Agregar +") }
         }
@@ -86,7 +98,7 @@ fun PantallaProductos(
                         readOnly = true,
                         label = { Text("Categoría") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCat) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
                     )
                     ExposedDropdownMenu(expanded = expandedCat, onDismissRequest = { expandedCat = false }) {
                         categoriasDisponibles.forEach { option ->
@@ -107,7 +119,7 @@ fun PantallaProductos(
                         readOnly = true,
                         label = { Text("Orden") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedOrd) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
                     )
                     ExposedDropdownMenu(expanded = expandedOrd, onDismissRequest = { expandedOrd = false }) {
                         opcionesOrden.forEach { option ->
@@ -137,8 +149,8 @@ fun PantallaProductos(
                     Card(shape = RoundedCornerShape(16.dp)) {
                         Box {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (p.imagenUri != null) {
-                                    val uri = if (p.imagenUri != null) android.net.Uri.parse(p.imagenUri) else null
+                                run {
+                                    val uri = p.imagenUri?.let { android.net.Uri.parse(it) }
                                     val id = if (uri != null && uri.scheme == "android.resource") uri.lastPathSegment?.toIntOrNull() else null
                                     val ctx = LocalContext.current
                                     val type = if (id != null) ctx.resources.getResourceTypeName(id) else null
@@ -149,7 +161,7 @@ fun PantallaProductos(
                                             modifier = Modifier.fillMaxWidth().height(120.dp),
                                             contentScale = ContentScale.Crop
                                         )
-                                    } else if (p.imagenUri != null) {
+                                    } else if (uri != null) {
                                         AsyncImage(
                                             model = p.imagenUri,
                                             contentDescription = p.nombre,
@@ -161,17 +173,10 @@ fun PantallaProductos(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .height(120.dp)
+                                                .clip(RoundedCornerShape(12.dp))
                                                 .background(Color(0xFFE9ECEF))
                                         )
                                     }
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(160.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFE9ECEF))
-                                    )
                                 }
                                 Text(p.nombre, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(p.descripcion, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)

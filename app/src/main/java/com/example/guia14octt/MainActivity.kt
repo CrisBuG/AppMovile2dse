@@ -5,15 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,7 +39,7 @@ fun BikeShopApp() {
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute != "login"
+    val showBottomBar = currentRoute != "login" && currentRoute != "register"
 
     Scaffold(
         bottomBar = {
@@ -49,7 +47,7 @@ fun BikeShopApp() {
                 NavigationBar { 
                     val items = listOf(
                         "home" to Icons.Outlined.Home,
-                        "productos" to Icons.Outlined.List,
+                        "productos" to Icons.AutoMirrored.Outlined.List,
                         "carrito" to Icons.Outlined.ShoppingCart,
                         "perfil" to Icons.Outlined.Person
                     )
@@ -73,7 +71,21 @@ fun BikeShopApp() {
         }
     ) { padding ->
         NavHost(navController = nav, startDestination = "login", modifier = Modifier.padding(padding)) {
-            composable("login") { LoginScreen(onSuccess = { nav.navigate("home") { popUpTo("login") { inclusive = true } } }) }
+            composable("login") {
+                LoginScreen(
+                    onSuccess = {
+                        nav.navigate("home") { popUpTo("login") { inclusive = true } }
+                    },
+                    onOpenRegister = { nav.navigate("register") }
+                )
+            }
+            composable("register") {
+                RegisterScreen(
+                    onSuccess = {
+                        nav.navigate("login") { popUpTo("register") { inclusive = true } }
+                    }
+                )
+            }
             composable("home") { HomeScreen(onBuyNow = { id -> nav.navigate("compras") }, onOpenQuienes = { nav.navigate("quienes") }, onOpenDetail = { id -> nav.navigate("detalle/$id") }) }
             composable("productos") { PantallaProductos(onOpen = { id -> nav.navigate("detalle/$id") }, onAgregar = { nav.navigate("agregar") }, onBuyNow = { nav.navigate("compras") }) }
             composable("carrito") { CartScreen(onCheckoutDone = { nav.navigate("perfil") }) }

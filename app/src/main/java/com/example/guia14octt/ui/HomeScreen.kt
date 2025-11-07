@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsBike
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -65,7 +67,7 @@ fun HomeScreen(
                             .padding(6.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Filled.DirectionsBike, contentDescription = "Quiénes Somos", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.DirectionsBike, contentDescription = "Quiénes Somos", tint = Color.White)
                     }
                 }
             }

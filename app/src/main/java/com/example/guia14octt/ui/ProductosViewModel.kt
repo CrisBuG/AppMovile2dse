@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.guia14octt.data.AppDatabase
+import com.example.guia14octt.data.ProductsRepository
 import com.example.guia14octt.data.Producto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,12 +14,24 @@ import kotlinx.coroutines.launch
 
 class ProductosViewModel(app: Application) : AndroidViewModel(app) {
     private val dao = AppDatabase.getInstance(app).productosDao()
+    private val repository = ProductsRepository(dao)
 
     val productos: StateFlow<List<Producto>> = dao.getAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        viewModelScope.launch(Dispatchers.IO) { seedIfEmpty(); patchResourceImages() }
+        viewModelScope.launch(Dispatchers.IO) {
+            // Primero intentamos cargar desde API si la base está vacía
+            val count = dao.count()
+            if (count == 0) {
+                val inserted = repository.refreshFromApi()
+                if (inserted == 0) {
+                    // Fallback a datos locales si falla la API
+                    seedIfEmpty()
+                }
+            }
+            patchResourceImages()
+        }
     }
 
     private suspend fun seedIfEmpty() {
@@ -133,6 +146,12 @@ class ProductosViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             dao.clear()
             seedIfEmpty()
+        }
+    }
+
+    fun syncFromApi() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.refreshFromApi()
         }
     }
 }

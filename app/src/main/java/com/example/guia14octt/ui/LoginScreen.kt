@@ -3,6 +3,10 @@ package com.example.guia14octt.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -10,10 +14,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(onSuccess: () -> Unit, authViewModel: AuthViewModel = viewModel()) {
+fun LoginScreen(
+    onSuccess: () -> Unit,
+    onOpenRegister: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
+) {
     var email by remember { mutableStateOf("user@bike.cl") }
     var pass by remember { mutableStateOf("1234") }
     var rememberMe by remember { mutableStateOf(true) }
@@ -94,11 +107,35 @@ fun LoginScreen(onSuccess: () -> Unit, authViewModel: AuthViewModel = viewModel(
                         onClick = { authViewModel.login(email, pass) },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Ingresar") }
-                    Text(
-                        text = "Credenciales demo: user@bike.cl / 1234",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+
+                    // Botón de Google
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val gso = remember {
+                        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                            .requestEmail()
+                            .build()
+                    }
+                    val googleClient = remember { GoogleSignIn.getClient(context, gso) }
+                    val googleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                        try {
+                            val account = task.getResult(ApiException::class.java)
+                            val emailAcc = account.email
+                            if (emailAcc != null) {
+                                authViewModel.loginGoogle(emailAcc, account.givenName, account.familyName, account.photoUrl?.toString())
+                                onSuccess()
+                            }
+                        } catch (_: ApiException) {
+                            // Ignorar errores para mantener código simple
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { googleLauncher.launch(googleClient.signInIntent) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Iniciar sesión con Google") }
+
+                    TextButton(onClick = { onOpenRegister() }) { Text("¿No tienes cuenta? Regístrate") }
+                    // Texto de ayuda removido: ahora login es real contra Room
                     }
                 }
             }

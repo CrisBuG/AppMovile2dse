@@ -13,6 +13,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.tooling.preview.Preview
+import coil.compose.AsyncImage
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,9 +25,12 @@ fun PerfilScreen(
     onLogout: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
+    val usuario by authViewModel.usuarioActual.collectAsState()
     val userName by authViewModel.userName.collectAsState()
-    var showEdit by remember { mutableStateOf(false) }
-    var nameEdit by remember(userName) { mutableStateOf(userName) }
+
+    val pickPhotoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        authViewModel.actualizarFoto(uri?.toString())
+    }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Profile") }) }) { padding ->
         Column(
@@ -39,10 +45,22 @@ fun PerfilScreen(
                 Column(
                     Modifier
                         .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Hola, $userName", style = MaterialTheme.typography.titleLarge)
-                    Text("¿Qué deseas hacer hoy?", style = MaterialTheme.typography.bodyMedium)
+                    AsyncImage(
+                        model = usuario?.photoUri,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.size(96.dp)
+                    )
+                    Text("Hola, ${userName}", style = MaterialTheme.typography.titleLarge)
+                    if (usuario != null) {
+                        Text("Correo: ${usuario!!.email}", style = MaterialTheme.typography.bodyMedium)
+                        if (!usuario!!.phone.isNullOrBlank()) {
+                            Text("Fono: ${usuario!!.phone}", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    OutlinedButton(onClick = { pickPhotoLauncher.launch("image/*") }) { Text("Cambiar foto") }
                 }
             }
 
@@ -72,11 +90,6 @@ fun PerfilScreen(
                 Text("Agregar producto")
             }
 
-            OutlinedButton(onClick = { showEdit = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
-                Text("Editar mis datos")
-            }
-
-
             Button(
                 onClick = {
                     authViewModel.logout()
@@ -91,37 +104,7 @@ fun PerfilScreen(
         }
     }
 
-    if (showEdit) {
-        AlertDialog(
-            onDismissRequest = { showEdit = false },
-            title = { Text("Editar mis datos") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = nameEdit,
-                        onValueChange = { nameEdit = it },
-                        label = { Text("Nombre") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = "Solo se edita el nombre visible.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    authViewModel.updateUserName(nameEdit.trim().ifBlank { userName })
-                    showEdit = false
-                }) { Text("Guardar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEdit = false }) { Text("Cancelar") }
-            }
-        )
-    }
+    // Edición de nombre removida para simplificar; ahora se muestran datos reales y foto.
 }
 
 @Preview(showBackground = true)
