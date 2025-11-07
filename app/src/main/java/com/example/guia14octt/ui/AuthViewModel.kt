@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = AuthRepository(AppDatabase.getInstance(app).usersDao())
+    private val prefs = app.getSharedPreferences("auth_prefs", android.content.Context.MODE_PRIVATE)
 
     private val _usuarioActual = MutableStateFlow<User?>(null)
     val usuarioActual: StateFlow<User?> = _usuarioActual
@@ -30,19 +31,37 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                 _userName.value = if (u != null) listOfNotNull(u.firstName, u.lastName).joinToString(" ") else "Usuario"
             }
         }
+
+        // Cargar sesión recordada si existe
+        viewModelScope.launch {
+            val rememberedEmail = prefs.getString("remember_email", null)
+            if (rememberedEmail != null) {
+                val u = repo.getByEmail(rememberedEmail)
+                _usuarioActual.value = u
+            }
+        }
     }
 
-    fun login(correo: String, contrasena: String, onResult: (Boolean) -> Unit) {
+    fun login(correo: String, contrasena: String, remember: Boolean, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val u = repo.login(correo, contrasena)
             _usuarioActual.value = u
+            // Persistir si Recordarme está activo; limpiar si no
+            prefs.edit().apply {
+                if (remember && u != null) putString("remember_email", u.email) else remove("remember_email")
+            }.apply()
             onResult(u != null)
         }
     }
 
+    // Conveniencia: login con flag remember sin callback
+    fun login(correo: String, contrasena: String, remember: Boolean) {
+        login(correo, contrasena, remember) { }
+    }
+
     // Sobrecarga para compatibilidad con pantallas existentes
     fun login(correo: String, contrasena: String) {
-        login(correo, contrasena) { }
+        login(correo, contrasena, false) { }
     }
 
     fun registrar(
@@ -65,10 +84,11 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun loginGoogle(email: String, givenName: String?, familyName: String?, photoUrl: String?) {
+    fun loginGoogle(email: String, givenName: String?, familyName: String?, photoUrl: String?, remember: Boolean = false) {
         viewModelScope.launch {
             val u = repo.loginOrCreateFromGoogle(email, givenName, familyName)
             _usuarioActual.value = if (photoUrl != null) u.copy(photoUri = photoUrl) else u
+            if (remember) prefs.edit().putString("remember_email", u.email).apply()
         }
     }
 
@@ -83,5 +103,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
     fun logout() {
         _usuarioActual.value = null
+        prefs.edit().remove("remember_email").apply()
     }
 }

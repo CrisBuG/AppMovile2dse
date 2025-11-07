@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -38,6 +39,15 @@ fun BikeShopApp() {
     val nav = rememberNavController()
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val authViewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val loggedIn by authViewModel.loggedIn.collectAsState()
+
+    // Si hay sesión recordada, saltar login automáticamente
+    androidx.compose.runtime.LaunchedEffect(loggedIn, currentRoute) {
+        if (loggedIn && currentRoute == "login") {
+            nav.navigate("home") { popUpTo("login") { inclusive = true } }
+        }
+    }
 
     val showBottomBar = currentRoute != "login" && currentRoute != "register"
 

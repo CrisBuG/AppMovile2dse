@@ -44,7 +44,10 @@ fun HomeScreen(
     val categorias = remember(productos) { listOf("Todos") + productos.map { it.categoria }.distinct() }
     var categoriaSel by remember { mutableStateOf("Todos") }
 
-    val destacados = remember(productos) { productos.filter { it.nombre.contains("Bicicleta", ignoreCase = true) }.take(3) }
+    val destacados = remember(productos) {
+        if (productos.isEmpty()) emptyList()
+        else productos.filter { it.categoria in setOf("Bicicletas", "Repuestos") }.take(4).ifEmpty { productos.take(4) }
+    }
     val listados = remember(productos, query, categoriaSel) {
         productos.filter { p ->
             (query.isBlank() || p.nombre.contains(query, ignoreCase = true) || p.descripcion.contains(query, ignoreCase = true)) &&
@@ -196,7 +199,7 @@ fun HomeScreen(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth().height(320.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 items(destacados) { p ->
                     Card(shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {

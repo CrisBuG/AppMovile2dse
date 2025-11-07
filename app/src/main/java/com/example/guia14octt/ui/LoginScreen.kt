@@ -27,9 +27,9 @@ fun LoginScreen(
     onOpenRegister: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
-    var email by remember { mutableStateOf("user@bike.cl") }
-    var pass by remember { mutableStateOf("1234") }
-    var rememberMe by remember { mutableStateOf(true) }
+    var email by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(false) }
     val loggedIn by authViewModel.loggedIn.collectAsState()
 
     LaunchedEffect(loggedIn) {
@@ -104,7 +104,7 @@ fun LoginScreen(
                         }
                     }
                     Button(
-                        onClick = { authViewModel.login(email, pass) },
+                        onClick = { authViewModel.login(email, pass, rememberMe) },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Ingresar") }
 
@@ -122,7 +122,13 @@ fun LoginScreen(
                             val account = task.getResult(ApiException::class.java)
                             val emailAcc = account.email
                             if (emailAcc != null) {
-                                authViewModel.loginGoogle(emailAcc, account.givenName, account.familyName, account.photoUrl?.toString())
+                                authViewModel.loginGoogle(
+                                    emailAcc,
+                                    account.givenName,
+                                    account.familyName,
+                                    account.photoUrl?.toString(),
+                                    rememberMe
+                                )
                                 onSuccess()
                             }
                         } catch (_: ApiException) {

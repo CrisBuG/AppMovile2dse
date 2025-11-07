@@ -55,6 +55,10 @@ class AuthRepository(private val usersDao: UsersDao) {
         usersDao.setPhotoUri(userId, uri)
     }
 
+    suspend fun getByEmail(email: String): User? = withContext(Dispatchers.IO) {
+        usersDao.getByEmail(email.trim().lowercase())
+    }
+
     private fun hash(text: String): String {
         val md = MessageDigest.getInstance("SHA-256")
         val bytes = md.digest(text.toByteArray())
