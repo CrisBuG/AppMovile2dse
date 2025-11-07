@@ -64,7 +64,7 @@ fun PantallaProductos(
             TopAppBar(
                 title = { Text("Productos") },
                 actions = {
-                    TextButton(onClick = { productosViewModel.syncFromApi() }) { Text("Actualizar") }
+                    TextButton(onClick = { productosViewModel.limpiar() }) { Text("Actualizar") }
                     TextButton(onClick = onAgregar) { Text("Agregar") }
                 }
             )

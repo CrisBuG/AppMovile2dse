@@ -21,14 +21,9 @@ class ProductosViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            // Primero intentamos cargar desde API si la base está vacía
-            val count = dao.count()
-            if (count == 0) {
-                val inserted = repository.refreshFromApi()
-                if (inserted == 0) {
-                    // Fallback a datos locales si falla la API
-                    seedIfEmpty()
-                }
+            // Datos locales alineados al negocio (bicicletas y repuestos)
+            if (dao.count() == 0) {
+                seedIfEmpty()
             }
             patchResourceImages()
         }
