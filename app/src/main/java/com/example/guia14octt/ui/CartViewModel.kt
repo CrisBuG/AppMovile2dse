@@ -57,6 +57,8 @@ class CartViewModel(app: Application) : AndroidViewModel(app) {
                     fechaMillis = System.currentTimeMillis()
                 )
             )
+            _items.value = emptyList()
+            recalc()
         }
     }
 
@@ -73,8 +75,6 @@ class CartViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 )
             }
-            _items.value = emptyList()
-            recalc()
         }
     }
 
