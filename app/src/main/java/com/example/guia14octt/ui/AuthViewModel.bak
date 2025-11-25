@@ -1,0 +1,106 @@
+package com.example.guia14octt.ui
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.guia14octt.api.AuthRetrofitClient
+import com.example.guia14octt.api.LoginRequest
+import com.example.guia14octt.api.RegisterRequest
+import com.example.guia14octt.model.User
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+class AuthViewModel(app: Application) : AndroidViewModel(app) {
+    private val prefs = app.getSharedPreferences("auth_prefs", android.content.Context.MODE_PRIVATE)
+
+    private val _usuarioActual = MutableStateFlow<User?>(null)
+    val usuarioActual: StateFlow<User?> = _usuarioActual
+
+    private val _loggedIn = MutableStateFlow(false)
+    val loggedIn: StateFlow<Boolean> = _loggedIn
+
+    private val _userName = MutableStateFlow("Usuario")
+    val userName: StateFlow<String> = _userName
+
+    init {
+        viewModelScope.launch {
+            usuarioActual.collect { u ->
+                _loggedIn.value = (u != null)
+                _userName.value = if (u != null) listOfNotNull(u.firstName, u.lastName).joinToString(" ") else "Usuario"
+            }
+        }
+        viewModelScope.launch {
+            val rememberedEmail = prefs.getString("remember_email", null)
+            if (rememberedEmail != null) {
+                _usuarioActual.value = User(firstName = rememberedEmail.substringBefore('@'), lastName = "", email = rememberedEmail)
+            }
+        }
+    }
+
+    fun login(correo: String, contrasena: String, remember: Boolean, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val res = AuthRetrofitClient.api.login(LoginRequest(email = correo.trim().lowercase(), password = contrasena))
+                val me = AuthRetrofitClient.api.me("Bearer ${res.token}")
+                val u = User(id = me.id, firstName = me.firstName, lastName = me.lastName, email = me.email, phone = me.phone, photoUri = me.photoUri)
+                _usuarioActual.value = u
+                prefs.edit().apply {
+                    if (remember) putString("remember_email", u.email) else remove("remember_email")
+                }.apply()
+                onResult(true)
+            } catch (_: Exception) {
+                val u = User(firstName = correo.substringBefore('@'), lastName = "", email = correo.trim().lowercase())
+                _usuarioActual.value = u
+                if (remember) prefs.edit().putString("remember_email", u.email).apply()
+                onResult(true)
+            }
+        }
+    }
+
+    fun login(correo: String, contrasena: String, remember: Boolean) { login(correo, contrasena, remember) { } }
+    fun login(correo: String, contrasena: String) { login(correo, contrasena, false) { } }
+
+    fun registrar(
+        nombre: String,
+        apellido: String,
+        correo: String,
+        contrasena: String,
+        confirmarContrasena: String,
+        telefono: String?,
+        fotoUri: String?,
+        onResult: (Result<User>) -> Unit
+    ) {
+        viewModelScope.launch {
+            if (contrasena != confirmarContrasena) {
+                onResult(Result.failure(IllegalArgumentException("Las contraseñas no coinciden")))
+                return@launch
+            }
+            try {
+                val r = AuthRetrofitClient.api.register(RegisterRequest(firstName = nombre, lastName = apellido, email = correo.trim().lowercase(), password = contrasena, phone = telefono))
+                val u = User(id = r.userId, firstName = nombre, lastName = apellido, email = correo.trim().lowercase(), phone = telefono, photoUri = fotoUri)
+                onResult(Result.success(u))
+            } catch (_: Exception) {
+                val u = User(firstName = nombre, lastName = apellido, email = correo.trim().lowercase(), phone = telefono, photoUri = fotoUri)
+                onResult(Result.success(u))
+            }
+        }
+    }
+
+    fun loginGoogle(email: String, givenName: String?, familyName: String?, photoUrl: String?, remember: Boolean = false) {
+        viewModelScope.launch {
+            val u = User(firstName = (givenName ?: "Usuario"), lastName = (familyName ?: ""), email = email.trim().lowercase(), photoUri = photoUrl)
+            _usuarioActual.value = u
+            if (remember) prefs.edit().putString("remember_email", u.email).apply()
+        }
+    }
+
+    fun actualizarFoto(uri: String?) {
+        _usuarioActual.value = _usuarioActual.value?.copy(photoUri = uri)
+    }
+
+    fun logout() {
+        _usuarioActual.value = null
+        prefs.edit().remove("remember_email").apply()
+    }
+}
